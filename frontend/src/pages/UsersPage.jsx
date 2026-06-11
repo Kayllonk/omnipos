@@ -1,0 +1,147 @@
+import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
+import Sidebar from '../components/Sidebar'
+import Topbar from '../components/Topbar'
+import { useAuth } from '../auth/AuthContext'
+import { Plus, Trash2, ShieldCheck, UserCog } from 'lucide-react'
+
+const api = axios.create({ baseURL: '' })
+
+export default function UsersPage() {
+  const { token, user, logout } = useAuth()
+  const [active, setActive] = useState('Usuários')
+  const [items, setItems] = useState([])
+  const [form, setForm] = useState({
+    username: '',
+    full_name: '',
+    email: '',
+    password: '',
+    role: 'operator'
+  })
+
+  const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token])
+
+  const load = async () => {
+    const res = await api.get('/api/users', { headers })
+    setItems(res.data)
+  }
+
+  useEffect(() => {
+    load()
+  }, [headers])
+
+  const create = async () => {
+    await api.post('/api/users', form, { headers })
+    setForm({
+      username: '',
+      full_name: '',
+      email: '',
+      password: '',
+      role: 'operator'
+    })
+    await load()
+  }
+
+  const remove = async (id) => {
+    await api.delete(`/api/users/${id}`, { headers })
+    await load()
+  }
+
+  return (
+    <div className="min-h-screen p-4">
+      <div className="grid lg:grid-cols-[280px_1fr] gap-4">
+        <Sidebar active={active} onChange={setActive} onLogout={logout} />
+
+        <main className="space-y-4">
+          <Topbar user={user} />
+
+          <section className="glass rounded-3xl p-5">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-2xl font-bold">Usuários</h3>
+                <p className="text-sm text-slate-400">Gerencie acessos e permissões do sistema</p>
+              </div>
+              <div className="hidden md:flex items-center gap-2 text-sm text-cyan">
+                <ShieldCheck className="w-4 h-4" />
+                Acesso administrativo
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
+              <input
+                value={form.username}
+                onChange={e => setForm({ ...form, username: e.target.value })}
+                placeholder="Usuário"
+                className="bg-panel2 border border-white/10 rounded-xl px-4 py-3 outline-none"
+              />
+              <input
+                value={form.full_name}
+                onChange={e => setForm({ ...form, full_name: e.target.value })}
+                placeholder="Nome completo"
+                className="bg-panel2 border border-white/10 rounded-xl px-4 py-3 outline-none"
+              />
+              <input
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+                placeholder="Email"
+                className="bg-panel2 border border-white/10 rounded-xl px-4 py-3 outline-none"
+              />
+              <input
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                placeholder="Senha"
+                type="password"
+                className="bg-panel2 border border-white/10 rounded-xl px-4 py-3 outline-none"
+              />
+              <select
+                value={form.role}
+                onChange={e => setForm({ ...form, role: e.target.value })}
+                className="bg-panel2 border border-white/10 rounded-xl px-4 py-3 outline-none"
+              >
+                <option value="admin">admin</option>
+                <option value="manager">manager</option>
+                <option value="operator">operator</option>
+              </select>
+            </div>
+
+            <button
+              onClick={create}
+              className="mb-6 px-4 py-3 rounded-xl bg-primary text-white font-semibold flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Criar usuário
+            </button>
+
+            <div className="space-y-3">
+              {items.map(u => (
+                <div key={u.id} className="rounded-2xl bg-white/5 p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
+                      <UserCog className="w-5 h-5 text-cyan" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">{u.full_name || u.username}</div>
+                      <div className="text-xs text-slate-400">
+                        {u.username} • {u.role} • {u.email || 'sem email'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => remove(u.id)}
+                    className="p-2 rounded-xl bg-red-500/10 text-red-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+
+              {items.length === 0 && (
+                <div className="text-slate-400 text-sm">Nenhum usuário encontrado.</div>
+              )}
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  )
+}

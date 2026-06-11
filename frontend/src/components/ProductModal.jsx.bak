@@ -1,0 +1,67 @@
+import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
+
+const empty = {
+  name: '',
+  sku: '',
+  barcode: '',
+  category: '',
+  cost_price: 0,
+  sale_price: 0,
+  stock: 0,
+  min_stock: 0,
+  image_url: ''
+}
+
+export default function ProductModal({ open, onClose, onSave, initial }) {
+  const [form, setForm] = useState(empty)
+
+  useEffect(() => {
+    setForm(initial ? { ...empty, ...initial } : empty)
+  }, [initial, open])
+
+  if (!open) return null
+
+  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="glass w-full max-w-3xl rounded-3xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-2xl font-black">{initial ? 'Editar produto' : 'Novo produto'}</h3>
+          <button onClick={onClose}><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          {[
+            ['name', 'Nome'],
+            ['sku', 'SKU'],
+            ['barcode', 'Barcode'],
+            ['category', 'Categoria'],
+            ['cost_price', 'Preço de custo'],
+            ['sale_price', 'Preço de venda'],
+            ['stock', 'Estoque'],
+            ['min_stock', 'Estoque mínimo'],
+            ['image_url', 'Imagem URL']
+          ].map(([key, label]) => (
+            <label key={key} className="text-sm">
+              <span className="text-slate-300">{label}</span>
+              <input
+                value={form[key]}
+                onChange={e => set(key, ['cost_price','sale_price','stock','min_stock'].includes(key) ? Number(e.target.value) : e.target.value)}
+                className="mt-2 w-full bg-panel2 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-primary"
+              />
+            </label>
+          ))}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-3 rounded-xl bg-white/5">Cancelar</button>
+          <button onClick={() => onSave(form)} className="px-4 py-3 rounded-xl bg-gradient-to-r from-primary to-cyan text-white font-bold">
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
